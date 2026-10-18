@@ -1,0 +1,25 @@
+# Keeps https://kurrasa.onrender.com awake: Render's free plan sleeps after 15 idle minutes.
+# Public repo = unlimited free Actions minutes. Contains no app code and no secrets.
+name: ping
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes (GitHub may run it a few minutes late)
+    - cron: '17 3 * * 1'    # weekly: record activity so GitHub never pauses the schedule
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - run: curl -fsS --retry 5 --retry-delay 15 --max-time 70 https://kurrasa.onrender.com/healthz
+  heartbeat:
+    if: github.event.schedule == '17 3 * * 1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          date -u > heartbeat.txt
+          git config user.name "pinger"; git config user.email "pinger@users.noreply.github.com"
+          git add heartbeat.txt; git commit -m "heartbeat" ; git push
